@@ -44,6 +44,7 @@ Main reason I've seen errors is because mercari decides to throw 403 if they bla
 ## Development
 
 Clone this repo, install the dependencies in `requirement.txt` and off you go.
+Modified this dependecies to be comaptible with nexus
 
 ## Deploying / Publishing
 

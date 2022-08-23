@@ -50,7 +50,7 @@ for new_key in items_new.keys():
     if not found_in_prev_list:
         print("not found!!! new elelemnt")
         found_different = True
-        print(new_key, " ",items_new[new_key])
+        print(new_key, " ", items_new[new_key])
     # if not found_different:
     #     print("element ", new_key ," found")
     #     print(new_key)
