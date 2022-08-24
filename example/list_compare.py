@@ -24,11 +24,12 @@ items_new["10x"] = ["Name1", 7777, "Status"]
 shared_items = {id: items_retreived[id] for id in items_retreived if id in items_new and items_retreived[id] == items_new[id]}
 print("Found the same")
 print(shared_items)
-
+print("test keys")
 for element in shared_items.items():
     print(element)
     print(element[0]) # key
     print(element[1]) # values
+    print(element[1][2])
 
 print(len(shared_items))
 

@@ -6,9 +6,12 @@ import json
 import requests
 import mercari
 
-
-items = mercari.search("Hioki")
+item_to_search = "hioki"
+items = mercari.search(item_to_search)
 items_list = {}
+running = True
+disable_alertzy  = False
+
 
 class Alertzy:
 
@@ -47,18 +50,25 @@ class Alertzy:
 def searchFor(item_name):
     items = mercari.search(item_name)
     items_list = {}
-
-    for item in items:
-        # print("{}, {}, {}, {}, {}, {}".format(item.id, item.status, item.soldOut,
-        #         item.price, item.productName, item.productURL))
-        items_list[item.id] = [item.productName, item.price, item.soldOut, item.productURL]
-    
-    return items_list
+    try:
+        for item in items:
+            # print("{}, {}, {}, {}, {}, {}".format(item.id, item.status, item.soldOut,
+            #         item.price, item.productName, item.productURL))
+            items_list[item.id] = [item.productName, item.price, item.soldOut, item.productURL]
+        
+        return items_list
+    except:
+        return items_list
+        pass
 
 def compareAndUpdateList(items_retreived, items_new):
     num_dif_items = 0
     different_items = {}
     found_different = False
+
+    if not items_new:
+        return items_retreived
+
     for new_key in items_new.keys():
         # print("test key ", new_key)
         found_in_prev_list = False
@@ -79,28 +89,50 @@ def compareAndUpdateList(items_retreived, items_new):
     if found_different:
         return items_new, different_items, num_dif_items
     else:
-        return items_new, different_items, num_dif_items
+        return items_retreived, different_items, num_dif_items
 
+def thread_notif():
+    global running
+    global alertzy
+    alertzy.sendNotification("Srated Hb for " + item_to_search  ,"Started Hb")
+    while running:
+        time.sleep(3600)
+        alertzy.sendNotification("Still Alive looking for " + item_to_search  ,"Heartbeat 1h")
+
+
+alertzy = None if disable_alertzy else Alertzy()
+notif_thread = threading.Thread(target = thread_notif)
+notif_thread.daemon = True
+notif_thread.start()
 
 def main():
-    disable_alertzy  = False
-    item_to_search = "Hioki"
+    global notif_thread
+    global running
+    global alertzy
+    global item_to_search
     list_retreived = searchFor(item_to_search)
-    alertzy = None if disable_alertzy else Alertzy()
+    if not list_retreived:
+        list_retreived = searchFor(item_to_search)
+    if not list_retreived:
+        list_retreived = searchFor(item_to_search)
     diff_items = {}
     print(list_retreived)
     while(True):
-        print("Waiting for update")
-        time.sleep(30)
-        items_new = searchFor(item_to_search)
-        list_retreived, diff_items, num_dif_items = compareAndUpdateList(list_retreived, items_new)
-        if num_dif_items < 5:
-            for element in diff_items.items():
-                alertzy.sendNotification("Master!!, found " + element[0] + " " + element[3]  ,"New " + item_to_search + "!!!")
-        else:
-            print("too much new eleemnts")
-                
-
+        try:
+            print("Waiting for update")
+            time.sleep(300)
+            print("doing search")
+            items_new = searchFor(item_to_search)
+            list_retreived, diff_items, num_dif_items = compareAndUpdateList(list_retreived, items_new)
+            if num_dif_items < 5:
+                for element in diff_items.items():
+                    alertzy.sendNotification("Master!!, " + element[0] + " " + element[1][3]  ,"New " + item_to_search + "!!!")
+            else:
+                print("too much new eleemnts")
+        except KeyboardInterrupt:
+            running = False
+            notif_thread.join()
+            break
 
 
 if __name__ == '__main__':
